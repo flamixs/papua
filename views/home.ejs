@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Hasil Pilkada Papua</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyber-blue: #00FFFF;
+            --cyber-dark: #1A1A2E;
+            --cyber-gray: #4E4E50;
+            --cyber-neon: #39FF14;
+            --cyber-purple: #9D00FF;
+        }
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 300;
+            margin: 0;
+            padding: 0;
+            background-color: #4B5320; /* Warna hijau army */
+            color: #FFFFFF; /* Mengubah warna teks menjadi putih */
+            font-size: 0.5em; /* Mengurangi ukuran font dasar */
+        }
+        header, footer {
+            background-color: #2C3E1F; /* Warna hijau tua army */
+            color: var(--cyber-neon);
+            padding: 1rem;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #FFFFFF; /* Mengubah warna judul dan logo menjadi putih */
+            font-family: 'Merriweather', serif;
+            letter-spacing: 1px;
+        }
+        .menu {
+            list-style-type: none;
+            display: flex;
+            gap: 1rem;
+        }
+        .menu li a {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+            color: #FFFFFF; /* Mengubah warna teks menu menjadi putih */
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .menu li a:hover {
+            background-color: var(--cyber-purple);
+            color: var(--cyber-neon);
+            box-shadow: 0 0 15px var(--cyber-purple);
+        }
+        main {
+            padding: 2rem;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #FFFFFF; /* Mengubah warna judul dan logo menjadi putih */
+            font-family: 'Merriweather', serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+        .content-wrapper {
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        .map-box, .sidebar, .chart-container {
+            flex-basis: calc(50% - 1rem);
+            background-color: rgba(255, 255, 255, 0.1); /* Warna putih transparan */
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Bayangan putih */
+            border: 1px solid rgba(255, 255, 255, 0.5); /* Border putih */
+            padding: 1rem;
+        }
+        #map {
+            height: 300px;
+            width: 100%;
+            border: 2px solid var(--cyber-blue);
+        }
+        .kabupaten-search {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 2px solid var(--cyber-blue);
+            border-radius: 4px;
+            background-color: rgba(26, 26, 46, 0.8);
+            color: var(--cyber-blue);
+            margin-bottom: 0.5rem;
+        }
+        .kabupaten-list {
+            max-height: 200px;
+            border: 2px solid var(--cyber-blue);
+            border-radius: 4px;
+            background-color: rgba(26, 26, 46, 0.8);
+            overflow-y: auto;
+        }
+        .kabupaten-list div {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .kabupaten-list div:hover {
+            background-color: rgba(0, 255, 255, 0.2);
+        }
+        .kabupaten-list div:last-child {
+            border-bottom: none;
+        }
+        .chart-container {
+            width: 25%; /* Setengah dari 50% */
+            max-width: 100px; /* Setengah dari 200px */
+            margin: 1rem auto;
+            padding: 1rem; /* Setengah dari padding sebelumnya (jika ada) */
+        }
+        footer {
+            background-color: #2C3E1F; /* Warna hijau tua army */
+            color: var(--cyber-neon);
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+            font-size: 2em; /* Mengurangi ukuran font dasar */
+        }
+        /* Tambahan untuk meningkatkan profesionalisme dan kesan klasik */
+        h1 {
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+        }
+        h2 {
+            font-size: 1.6rem;
+            letter-spacing: 0.3px;
+        }
+        .logo {
+            font-size: 1.6rem;
+            letter-spacing: 0.5px;
+        }
+        .menu li a {
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        p {
+            line-height: 1.6;
+        }
+        .charts-wrapper {
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .chart-container {
+            flex: 1;
+            max-width: calc(40% - 1rem);
+        }
+    /* ... CSS sebelumnya ... */
+
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .kabupaten-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 4px;
+        padding: 1rem;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    .search-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .kabupaten-search {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 2px solid var(--cyber-blue);
+        border-radius: 4px;
+        background-color: rgba(26, 26, 46, 0.8);
+        color: var(--cyber-blue);
+        margin-bottom: 0.5rem;
+        box-sizing: border-box;
+    }
+
+    .kabupaten-list {
+        flex: 1;
+        max-height: 200px;
+        border: 2px solid var(--cyber-blue);
+        border-radius: 4px;
+        background-color: rgba(26, 26, 46, 0.8);
+        overflow-y: auto;
+    }
+
+    @media (max-width: 768px) {
+        body {
+            font-size: 14px;
+            padding: 0.5rem;
+        }
+
+        .content-wrapper {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .map-box, .sidebar, .chart-container {
+            flex-basis: 100%;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+        }
+
+        #map {
+            height: 250px;
+        }
+
+        .charts-wrapper {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: none;
+            padding: 0.75rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+        }
+
+        .kabupaten-search {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .kabupaten-list {
+            max-height: 150px;
+        }
+
+        .kabupaten-list div {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            padding: 0.75rem;
+            font-size: 0.8em;
+        }
+
+        footer p {
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .menu li a {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+    }
+
+    .chart-box {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .chart-box {
+            margin-bottom: 0.75rem;
+        }
+    }
+</style>
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo"><i class="fas fa-flag"></i> Report On Papua</div>
+            <ul class="menu">
+                <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="/about"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="/contact"><i class="fas fa-envelope"></i> Contact</a></li>
+                <li><a href="/tps"><i class="fas fa-vote-yea"></i> TPS</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h1><i class="fas fa-chart-bar"></i> Laporan Hasil Pilkada</h1>
+        <div class="content-wrapper">
+            <div class="map-box">
+                <h2><i class="fas fa-map-marked-alt"></i> Peta Papua</h2>
+                <div id="map"></div>
+            </div>
+            <div class="sidebar">
+                <div class="kabupaten-box">
+                    <h2><i class="fas fa-city"></i> Kabupaten</h2>
+                    <div class="search-container">
+                        <input type="text" class="kabupaten-search" placeholder="Cari/pilih kabupaten...">
+                        <div class="kabupaten-list">
+                            <!-- Daftar kabupaten akan ditambahkan di sini -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="charts-wrapper">
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2><i class="fas fa-chart-pie"></i> Hasil Suara Calon Gubernur</h2>
+                    <canvas id="voteChartGubernur"></canvas>
+                </div>
+            </div>
+            <div class="chart-box">
+                <div class="chart-container">
+                    <h2><i class="fas fa-chart-pie"></i> Hasil Suara Calon Bupati</h2>
+                    <canvas id="voteChartBupati"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p><i class="far fa-copyright"></i> 2023 Laporan Hasil Pilkada Papua</p>
+        <p>Hak Cipta Dilindungi</p>
+    </footer>
+    <script>
+        // Definisikan koordinat untuk setiap kabupaten
+        const kabupatenData = {
+            'Jayapura': [-2.5916, 140.6689],
+            'Nabire': [-3.3680, 135.4951],
+            'Timika': [-4.5461, 136.8867],
+            'Merauke': [-8.4961, 140.3951],
+            'Biak Numfor': [-1.0381, 135.9800],
+            'Kepulauan Yapen': [-1.7477, 136.1709]
+        };
+
+        const kabupaten = Object.keys(kabupatenData);
+
+        var map = L.map('map').setView([-4.269928, 138.080353], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var southWest = L.latLng(-9.0, 130.0);
+        var northEast = L.latLng(0.0, 145.0);
+        var bounds = L.latLngBounds(southWest, northEast);
+        
+        map.setMaxBounds(bounds);
+        map.on('drag', function() {
+            map.panInsideBounds(bounds, { animate: false });
+        });
+
+        // Buat objek untuk menyimpan marker
+        const markers = {};
+
+        // Tambahkan marker untuk setiap kabupaten
+        kabupaten.forEach(k => {
+            const marker = L.marker(kabupatenData[k]).addTo(map).bindPopup(k);
+            markers[k] = marker;
+        });
+
+        const kabupatenBox = document.querySelector('.kabupaten-box');
+        const kabupatenList = document.querySelector('.kabupaten-list');
+        const kabupatenSearch = document.querySelector('.kabupaten-search');
+
+        function renderKabupatenList(filter = '') {
+            kabupatenList.innerHTML = '';
+            kabupaten.filter(k => k.toLowerCase().includes(filter.toLowerCase()))
+                     .forEach(k => {
+                         const div = document.createElement('div');
+                         div.textContent = k;
+                         div.addEventListener('click', () => {
+                             kabupatenSearch.value = k;
+                             map.setView(kabupatenData[k], 10);
+                             markers[k].openPopup();
+                             kabupatenList.style.display = 'none';
+                             updateBupatiChart(k);
+                         });
+                         kabupatenList.appendChild(div);
+                     });
+        }
+
+        renderKabupatenList();
+
+        kabupatenSearch.addEventListener('focus', () => {
+            kabupatenList.style.display = 'block';
+        });
+
+        kabupatenSearch.addEventListener('input', (e) => {
+            renderKabupatenList(e.target.value);
+            kabupatenList.style.display = 'block';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!kabupatenBox.contains(e.target)) {
+                kabupatenList.style.display = 'none';
+            }
+        });
+
+        // Sesuaikan ukuran peta setelah dimuat
+        map.on('load', function() {
+            map.invalidateSize();
+        });
+
+        // Kode untuk membuat diagram suara
+        Chart.register(ChartDataLabels);
+        const ctxGubernur = document.getElementById('voteChartGubernur').getContext('2d');
+        new Chart(ctxGubernur, {
+            type: 'pie',
+            data: {
+                labels: ['Calon A', 'Calon B'],
+                datasets: [{
+                    data: [50, 50],
+                    backgroundColor: [
+                        'rgba(0, 255, 255, 0.8)',
+                        'rgba(57, 255, 20, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(0, 255, 255, 1)',
+                        'rgba(57, 255, 20, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#00FFFF'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Persentase Suara',
+                        font: {
+                            size: 18,
+                            weight: 'bold'
+                        },
+                        color: '#39FF14'
+                    },
+                    datalabels: {
+                        color: '#1A1A2E',
+                        font: {
+                            weight: 'bold',
+                            size: 16
+                        },
+                        formatter: (value) => {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        });
+
+        // Tambahkan kode untuk membuat diagram suara Bupati
+        let bupatiChart;
+        const ctxBupati = document.getElementById('voteChartBupati').getContext('2d');
+        bupatiChart = new Chart(ctxBupati, {
+            type: 'pie',
+            data: {
+                labels: ['Calon X', 'Calon Y', 'Calon Z'],
+                datasets: [{
+                    data: [33, 33, 34],
+                    backgroundColor: [
+                        'rgba(0, 255, 255, 0.8)',
+                        'rgba(57, 255, 20, 0.8)',
+                        'rgba(255, 105, 180, 0.8)' // Warna baru untuk Calon Z
+                    ],
+                    borderColor: [
+                        'rgba(0, 255, 255, 1)',
+                        'rgba(57, 255, 20, 1)',
+                        'rgba(255, 105, 180, 1)' // Warna border baru untuk Calon Z
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#00FFFF'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Persentase Suara',
+                        font: {
+                            size: 18,
+                            weight: 'bold'
+                        },
+                        color: '#39FF14'
+                    },
+                    datalabels: {
+                        color: '#1A1A2E',
+                        font: {
+                            weight: 'bold',
+                            size: 16
+                        },
+                        formatter: (value) => {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        });
+
+        // Tambahkan kode ini setelah definisi kabupatenData
+
+        // Data dummy untuk presentase suara bupati di setiap kabupaten
+        const suaraBupati = {
+            'Jayapura': [30, 35, 35],
+            'Nabire': [40, 30, 30],
+            'Timika': [33, 33, 34],
+            'Merauke': [35, 35, 30],
+            'Biak Numfor': [30, 40, 30],
+            'Kepulauan Yapen': [35, 30, 35]
+        };
+
+        // Fungsi untuk memperbarui chart bupati
+        function updateBupatiChart(kabupaten) {
+            const data = suaraBupati[kabupaten];
+            if (data && bupatiChart) {
+                bupatiChart.data.datasets[0].data = data;
+                bupatiChart.update();
+            }
+        }
+
+        // Modifikasi event listener untuk klik pada marker
+        kabupaten.forEach(k => {
+            const marker = L.marker(kabupatenData[k]).addTo(map).bindPopup(k);
+            markers[k] = marker;
+            marker.on('click', () => {
+                updateBupatiChart(k);
+            });
+        });
+
+        // Modifikasi fungsi renderKabupatenList
+        function renderKabupatenList(filter = '') {
+            kabupatenList.innerHTML = '';
+            kabupaten.filter(k => k.toLowerCase().includes(filter.toLowerCase()))
+                     .forEach(k => {
+                         const div = document.createElement('div');
+                         div.textContent = k;
+                         div.addEventListener('click', () => {
+                             kabupatenSearch.value = k;
+                             map.setView(kabupatenData[k], 10);
+                             markers[k].openPopup();
+                             kabupatenList.style.display = 'none';
+                             updateBupatiChart(k);
+                         });
+                         kabupatenList.appendChild(div);
+                     });
+        }
+        // Inisialisasi dengan data default (misalnya Jayapura)
+        updateBupatiChart('Jayapura');
+
+        // Tambahkan kode ini di bagian bawah
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menu = document.querySelector('.menu');
+
+        menuToggle.addEventListener('click', () => {
+            menu.classList.toggle('active');
+        });
+
+        // Tambahkan kode ini untuk menyembunyikan daftar kabupaten secara default
+        kabupatenList.style.display = 'none';
+
+        // Tambahkan kode ini untuk menampilkan dan menyembunyikan daftar kabupaten saat diperlukan
+        kabupatenSearch.addEventListener('focus', () => {
+            kabupatenList.style.display = 'block';
+        });
+
+        kabupatenSearch.addEventListener('blur', () => {
+            setTimeout(() => {
+                kabupatenList.style.display = 'none';
+            }, 200);
+        });
+
+        // Tambahkan kode ini untuk menyembunyikan daftar kabupaten setelah item dipilih
+        kabupatenList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'DIV') {
+                kabupatenList.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
